@@ -1,0 +1,34 @@
+{% load static %}
+<nav class="navbar">
+    <div>
+        <a href="#">
+            <img class="primary-icon" src="{% static 'img/logo.png' %}" />
+        </a>
+    </div>
+    <ul class="nav-list" id="nav-list">
+        <li class="list-item">
+            <a>Main</a>
+        </li>
+        <li class="list-item">
+            <a>Main 2</a>
+        </li>
+        <li class="list-item">
+            <a>Main 3</a>
+        </li>
+    </ul>
+    <div class="menu" id="toggle-button">
+        <div class="menu-line"></div>
+        <div class="menu-line"></div>
+        <div class="menu-line"></div>
+    </div>
+</nav>
+
+{% block custom_js %}
+    <script>
+        const toggleButton = document.getElementById('toggle-button')
+        const navList = document.getElementById('nav-list')
+        toggleButton.addEventListener('click', () => {
+            navList.classList.toggle('active');
+        })
+    </script>
+{% endblock custom_js %}
