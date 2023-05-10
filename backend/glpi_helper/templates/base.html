@@ -4,15 +4,16 @@
   <head>
     <title>{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
-    
+    <script src="{% static 'js/app.js'%}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   </head>
   <body>
     {% include 'header.html' %}
 
-    {% block body_data %}{% endblock body_data %}
+    <main>
+      {% block content %}{% endblock content %}
+    </main>
 
     {% include 'footer.html' %}
-
-    <script src="{% static 'js/app.js' type="text/javascript" %}"></script>
   </body>
 </html>

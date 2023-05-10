@@ -7,7 +7,10 @@
     </div>
     <ul class="nav-list" id="nav-list">
         <li class="list-item">
-            <a>Main</a>
+            <a href="{% url 'home' %}">Главная</a>
+        </li>
+        <li class="list-item">
+            <a href="{% url 'scanner' %}">Сканер</a>
         </li>
         <li class="list-item">
             <a>Main 2</a>
@@ -16,19 +19,9 @@
             <a>Main 3</a>
         </li>
     </ul>
-    <div class="menu" id="toggle-button">
-        <div class="menu-line"></div>
-        <div class="menu-line"></div>
-        <div class="menu-line"></div>
-    </div>
+    <button class="menu" id="toggle-button" onclick="menuToggle(event)">
+        <span class="menu-line"></span>
+        <span class="menu-line"></span>
+        <span class="menu-line"></span>
+    </button>
 </nav>
-
-{% block custom_js %}
-    <script>
-        const toggleButton = document.getElementById('toggle-button')
-        const navList = document.getElementById('nav-list')
-        toggleButton.addEventListener('click', () => {
-            navList.classList.toggle('active');
-        })
-    </script>
-{% endblock custom_js %}

@@ -9,6 +9,9 @@
     --background: #FFFFFF;
     --text: #4C5867;
     --link: #58ABB7;
+    --menu-list-hover: #F1F5F8;
+    --menu-shadow: #4C586733;
+    --menu-toggle: #384554;
 }
 
 .navbar {
@@ -37,6 +40,8 @@
 .navbar a {
     color: var(--text);
     text-decoration: none;
+    width: 100%;
+    display: block;
 }
 
 .navbar a:hover {
@@ -50,9 +55,9 @@
 
 .menu-line {
     width: 20px;
-    height: 3px;
+    height: 2px;
     background-color: var(--text);
-    margin-bottom: 4px;
+    margin: 4px 0;
 }
 
 @media all and (max-width: 576px) {
@@ -65,6 +70,16 @@
     }
 
     .menu {
+        display: flex;
+        flex-direction: column;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        position: absolute;
+        right: 30px;
+        top: 30px;
+    }
+    /*.menu {
         display: block;
         position: absolute;
         right: 10px;
@@ -73,21 +88,28 @@
         color: var(--text);
     }
 
+    .menu::after {
+        background: var(--menu-toggle);
+        box-shadow: 0 10px 0 0 var(--menu-toggle), 0 20px 0 0 var(--menu-toggle);
+    }*/
+
     .nav-list {
         list-style-type: none;
-        width: 100%;
-        text-align: center;
-        padding-top: 10px;
+        width: 90%;
+        text-align: left;
         display: none;
+        -webkit-box-shadow: 3px 0 0 0 var(--menu-shadow), -3px 0 0 0 var(--menu-shadow), 0 3px 0 0 var(--menu-shadow);
     }
 
     .nav-list .list-item {
         display: block;
-        border-top: 1px solid var(--text);
+    }
+
+    .nav-list .list-item:hover {
+        background-color: var(--menu-list-hover);
     }
 
     .primary-icon {
-        
         margin-left: 10px;
     }
 

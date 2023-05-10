@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <h1>File Scanner</h1>
+
+  <form enctype="multipart/form-data" method="post" id="qr-form" onsubmit="postFile(event, document.getElementById('qr-form'), document.getElementById('preview'))">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="file-input">Choose a file:</label>
+      <input type="file" capture="user" id="file-input" name="file" accept=".jpg, .jpeg, .png" onchange="document.getElementById('qr-form').submit();">
+    </div>
+  </form>
+
+  <div id="preview"></div>
+
+  <div>
+    <div>
+      {{ item.id }}
+    </div>
+    <div>
+      {{ item.name }}
+    </div>
+    <div>
+      {{ item.serial }}
+    </div>
+    <div>
+      {{ item.otherserial }}
+    </div>
+    <div>
+      {{ item.comment }}
+    </div>
+  </div>
+</div>
+
+<script>
+  $('#file-input').change( function () {
+    $.ajax({
+        url:     '{% url "scanner" %}',
+        type:     "POST",
+        headers: { 'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest' },
+        dataType: "multipart/form-data",
+        data: form.serialize(),
+        onsuccess: function(response) {
+        	result = $.parseJSON(response);
+            alert('Данные отправлены!');
+        	preview.text('Name: ' + response.name);
+    	},
+    	onerror: function(response) {
+            alert('Error occurred!');
+            preview.text('Ошибка. Данные не отправлены.');
+    	}
+ 	});
+
+    return false;
+  })
+</script>
+{% endblock %}

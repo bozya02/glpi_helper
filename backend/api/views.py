@@ -23,15 +23,23 @@ def get_items(request: WSGIRequest = None) -> JsonResponse:
             'value': request.GET.get(param)
         })
 
-    items = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999', uid_cols=True)
+    items = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999', uid_cols=True, forcedisplay=[126])
 
-    return JsonResponse({'items': refactor_names(items)})
+    return JsonResponse({'items': items})
 
 
 def get_locations(request: WSGIRequest = None) -> JsonResponse:
     locations = glpi.get_all_items(itemtype='Location', range='0-999999')
     locations = [{'id': item['id'], 'name': item['name']} for item in locations]
     return JsonResponse({'locations': locations})
+
+
+def get_item(request: WSGIRequest):
+    itemtype = request.GET.get('itemtype')
+    item_id = request.GET.get('item_id')
+    item = glpi.get_item(itemtype=itemtype, item_id=item_id)
+
+    return JsonResponse({'item': item})
 
 
 def refactor_names(items: list) -> list:

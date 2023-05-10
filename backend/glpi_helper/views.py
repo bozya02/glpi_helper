@@ -1,8 +1,15 @@
 # import Http Response from django
-from django.shortcuts import render
+import urllib.parse
+
+from django.core.handlers.wsgi import WSGIRequest
+from django.http import HttpResponse, QueryDict, JsonResponse
+from django.shortcuts import render, redirect
 import requests
 import api.views
 import json
+import io
+
+from glpi_helper import service
 
 
 # create a function
@@ -15,5 +22,35 @@ def items_view(request):
     return render(request, 'base.html', items)
 
 
-def home(request):
+def home(request: WSGIRequest) -> HttpResponse:
     return render(request, 'home.html')
+
+
+def scanner(request: WSGIRequest) -> JsonResponse | HttpResponse:
+    item_type = request.GET.get('itemtype')
+    item_id = request.GET.get('item_id')
+    if request.method == 'POST':
+        file = request.FILES.get('file')
+        if file:
+            qr_code = service.read(file.read())
+            if qr_code:
+                params = urllib.parse.parse_qs(urllib.parse.urlsplit(qr_code).query)
+                print(params)
+                item_type = params.get('itemtype', item_type)[0]
+                item_id = params.get('item_id', item_id)[0]
+
+    if is_ajax(request):
+        print(item_type)
+        print(item_id)
+        # response_data = {'id': item_id}
+        # return redirect('/?itemtype={0}&item_id={1}'.format(item_type, item_id))
+
+    if item_type is None or item_id is None:
+        print(1)
+        return render(request, 'scanner.html')
+    else:
+        return render(request, 'scanner.html', json.loads(api.views.get_item(request).content))
+
+
+def is_ajax(request: WSGIRequest) -> bool:
+    return request.content_type == 'multipart/form-data'
