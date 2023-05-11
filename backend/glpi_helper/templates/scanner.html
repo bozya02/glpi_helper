@@ -8,13 +8,14 @@
     {% csrf_token %}
     <div class="form-group">
       <label for="file-input">Choose a file:</label>
-      <input type="file" capture="user" id="file-input" name="file" accept=".jpg, .jpeg, .png" onchange="document.getElementById('qr-form').submit();">
+      <input type="file" capture="user" id="file-input" name="file" accept="image/*">
+      <!--<input type="file" capture="user" id="file-input" name="file" accept="image/*" onchange="document.getElementById('qr-form').submit();">-->
     </div>
   </form>
 
-  <div id="preview"></div>
+  <p id="preview"></p>
 
-  <div>
+  <!--<div>
     <div>
       {{ item.id }}
     </div>
@@ -30,21 +31,23 @@
     <div>
       {{ item.comment }}
     </div>
-  </div>
+  </div>-->
 </div>
 
 <script>
-  $('#file-input').change( function () {
+  $('#file-input').change( function (event) {
+    event.preventDefault()
+    var preview = $('#preview')
+    var form = $('#qr-form').serialize()
     $.ajax({
         url:     '{% url "scanner" %}',
         type:     "POST",
-        headers: { 'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest' },
         dataType: "multipart/form-data",
-        data: form.serialize(),
+        data: $('#qr-form').serialize(),
         onsuccess: function(response) {
+          alert('Данные отправлены!');
         	result = $.parseJSON(response);
-            alert('Данные отправлены!');
-        	preview.text('Name: ' + response.name);
+        	preview.text('Name: ' + response.itemtype);
     	},
     	onerror: function(response) {
             alert('Error occurred!');

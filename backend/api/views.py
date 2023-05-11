@@ -1,5 +1,5 @@
 from django.core.handlers.wsgi import WSGIRequest
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseNotFound
 from glpi_api import GLPI
 import json
 
@@ -9,7 +9,7 @@ user_token = ['glpi', 'adminBozya02']
 glpi = GLPI(url=url, apptoken=app_token, auth=user_token, verify_certs=False)
 
 
-def get_items(request: WSGIRequest = None) -> JsonResponse:
+def get_items(request: WSGIRequest = None):
     criteria = []
     itemtype = request.GET.get('itemtype')
     if not itemtype:
@@ -23,7 +23,10 @@ def get_items(request: WSGIRequest = None) -> JsonResponse:
             'value': request.GET.get(param)
         })
 
-    items = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999', uid_cols=True, forcedisplay=[126])
+    try:
+        items = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999', uid_cols=True, forcedisplay=[126])
+    except Exception:
+        return HttpResponseNotFound()
 
     return JsonResponse({'items': items})
 
@@ -37,7 +40,14 @@ def get_locations(request: WSGIRequest = None) -> JsonResponse:
 def get_item(request: WSGIRequest):
     itemtype = request.GET.get('itemtype')
     item_id = request.GET.get('item_id')
-    item = glpi.get_item(itemtype=itemtype, item_id=item_id)
+
+    if itemtype is None or item_id is None:
+        return HttpResponseNotFound()
+
+    try:
+        item = glpi.get_item(itemtype=itemtype, item_id=item_id)
+    except Exception:
+        return HttpResponseNotFound()
 
     return JsonResponse({'item': item})
 

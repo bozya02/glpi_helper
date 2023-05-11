@@ -40,10 +40,9 @@ def scanner(request: WSGIRequest) -> JsonResponse | HttpResponse:
                 item_id = params.get('item_id', item_id)[0]
 
     if is_ajax(request):
-        print(item_type)
-        print(item_id)
-        # response_data = {'id': item_id}
-        # return redirect('/?itemtype={0}&item_id={1}'.format(item_type, item_id))
+        print({'itemtype': item_type})
+        return JsonResponse({'itemtype': item_type})
+        #return redirect('/scanner/?itemtype={0}&item_id={1}'.format(item_type, item_id))
 
     if item_type is None or item_id is None:
         print(1)
@@ -53,4 +52,4 @@ def scanner(request: WSGIRequest) -> JsonResponse | HttpResponse:
 
 
 def is_ajax(request: WSGIRequest) -> bool:
-    return request.content_type == 'multipart/form-data'
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
