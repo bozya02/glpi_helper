@@ -1,61 +1,59 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
-  <h1>File Scanner</h1>
+    <div class="container">
+        <h1>File Scanner</h1>
 
-  <form enctype="multipart/form-data" method="post" id="qr-form" onsubmit="postFile(event, document.getElementById('qr-form'), document.getElementById('preview'))">
-    {% csrf_token %}
-    <div class="form-group">
-      <label for="file-input">Choose a file:</label>
-      <input type="file" capture="user" id="file-input" name="file" accept="image/*">
-      <!--<input type="file" capture="user" id="file-input" name="file" accept="image/*" onchange="document.getElementById('qr-form').submit();">-->
-    </div>
-  </form>
+        <form enctype="multipart/form-data" method="post" id="qr-form"
+              onsubmit="postFile(event, document.getElementById('qr-form'), document.getElementById('preview'))">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="file-input">Choose a file:</label>
+                <input type="file" capture="user" id="file-input" name="file" accept="image/*">
+                <!--<input type="file" capture="user" id="file-input" name="file" accept="image/*" onchange="document.getElementById('qr-form').submit();">-->
+            </div>
+        </form>
 
-  <p id="preview"></p>
+        <div id="preview"></div>
 
-  <!--<div>
-    <div>
-      {{ item.id }}
+        <div>
+            <div>
+                {{ item.id }}
+            </div>
+            <div>
+                {{ item.name }}
+            </div>
+            <div>
+                {{ item.serial }}
+            </div>
+            <div>
+                {{ item.otherserial }}
+            </div>
+            <div>
+                {{ item.comment }}
+            </div>
+        </div>
     </div>
-    <div>
-      {{ item.name }}
-    </div>
-    <div>
-      {{ item.serial }}
-    </div>
-    <div>
-      {{ item.otherserial }}
-    </div>
-    <div>
-      {{ item.comment }}
-    </div>
-  </div>-->
-</div>
 
-<script>
-  $('#file-input').change( function (event) {
-    event.preventDefault()
-    var preview = $('#preview')
-    var form = $('#qr-form').serialize()
-    $.ajax({
-        url:     '{% url "scanner" %}',
-        type:     "POST",
-        dataType: "multipart/form-data",
-        data: $('#qr-form').serialize(),
-        onsuccess: function(response) {
-          alert('Данные отправлены!');
-        	result = $.parseJSON(response);
-        	preview.text('Name: ' + response.itemtype);
-    	},
-    	onerror: function(response) {
-            alert('Error occurred!');
-            preview.text('Ошибка. Данные не отправлены.');
-    	}
- 	});
-
-    return false;
-  })
-</script>
+    <script>
+        $('#file-input').change(function (event) {
+            event.preventDefault()
+            var form = $('#qr-form')[0];
+            var formData = new FormData(form);
+            $.ajax({
+                url: '{% url 'scanner' %}',
+                type: "POST",
+                contentType: false,
+                processData: false,
+                dataType: 'json',
+                data: formData,
+                success: function (response) {
+                    $('#preview').html('Name: ' + response.item.serial);
+                },
+                error: function (response) {
+                    $('#preview').html('Ошибка. Данные не отправлены.');
+                }
+            });
+        })
+    </script>
 {% endblock %}

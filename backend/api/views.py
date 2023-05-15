@@ -1,5 +1,5 @@
 from django.core.handlers.wsgi import WSGIRequest
-from django.http import JsonResponse, HttpResponseNotFound
+from django.http import JsonResponse, HttpResponseNotFound, HttpRequest
 from glpi_api import GLPI
 import json
 
@@ -9,7 +9,7 @@ user_token = ['glpi', 'adminBozya02']
 glpi = GLPI(url=url, apptoken=app_token, auth=user_token, verify_certs=False)
 
 
-def get_items(request: WSGIRequest = None):
+def get_items(request: WSGIRequest | HttpRequest = None):
     criteria = []
     itemtype = request.GET.get('itemtype')
     if not itemtype:
@@ -37,10 +37,7 @@ def get_locations(request: WSGIRequest = None) -> JsonResponse:
     return JsonResponse({'locations': locations})
 
 
-def get_item(request: WSGIRequest):
-    itemtype = request.GET.get('itemtype')
-    item_id = request.GET.get('item_id')
-
+def get_item(request: WSGIRequest | HttpRequest, itemtype, item_id):
     if itemtype is None or item_id is None:
         return HttpResponseNotFound()
 
