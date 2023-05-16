@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div>
+        <h1>Table scanner</h1>
+
+        <form enctype="multipart/form-data" method="post" id="qr-form">
+            {% csrf_token %}
+            {{ form }}
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Название</th>
+                    <th>Серийный</th>
+                    <th>Инвентарный</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.item.name }}</td>
+                    <td>{{ item.item.serial }}</td>
+                    <td>{{ item.item.otherserial }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -8,6 +8,7 @@ import requests
 import api.views
 import json
 import io
+from .forms import ScannerForm
 
 from glpi_helper import service
 
@@ -28,6 +29,7 @@ def home(request: WSGIRequest) -> HttpResponse:
 
 def scanner(request: WSGIRequest, itemtype: str = None, item_id: int = None) -> JsonResponse | HttpResponse:
     if request.method == 'POST':
+        form = ScannerForm(request.POST, request.FILES)
         file = request.FILES.get('file')
         if file:
             qr_code = service.read(file.read())
@@ -35,15 +37,32 @@ def scanner(request: WSGIRequest, itemtype: str = None, item_id: int = None) -> 
                 params = qr_code.split('/')[3:6]
                 itemtype = params[1]
                 item_id = params[2]
-
-    if is_ajax(request):
-        return JsonResponse(json.loads(api.views.get_item(request, itemtype, item_id).content))
-
-    if itemtype is None or item_id is None:
-        return render(request, 'scanner.html')
     else:
-        return render(request, 'scanner.html', json.loads(api.views.get_item(request, itemtype, item_id).content))
+        form = ScannerForm()
+        form.fields['file'].widget.attrs['onchange'] = 'this.form.submit();'
+
+    context = {'form': form}
+    if not (itemtype is None or item_id is None):
+        context['item'] = json.loads(api.views.get_item(request, itemtype, item_id).content)['item']
+    return render(request, 'scanner.html', context)
 
 
-def is_ajax(request: WSGIRequest) -> bool:
-    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+def scanner_table(request):
+    items = request.session.get('items', [])
+    if request.method == 'POST':
+        form = ScannerForm(request.POST, request.FILES)
+        file = request.FILES.get('file')
+        if file:
+            qr_code = service.read(file.read())
+            if qr_code:
+                params = qr_code.split('/')[3:6]
+                itemtype = params[1]
+                item_id = params[2]
+                items.append(json.loads(api.views.get_item(request, itemtype, item_id).content))
+                request.session['items'] = items
+    else:
+        form = ScannerForm()
+        form.fields['file'].widget.attrs['onchange'] = 'this.form.submit();'
+
+    context = {'form': form, 'items': items}
+    return render(request, 'scanner_table.html', context)
