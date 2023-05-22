@@ -2,6 +2,9 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse, HttpResponseNotFound, HttpRequest
 from glpi_api import GLPI
 import json
+from forcedisplays import *
+
+import forcedisplays
 
 url = 'http://10.3.2.103/apirest.php'
 app_token = 'v3WMy8feotFXH9G6tTOWyu9UdyMsBNn0xWzEFSvk'
@@ -24,7 +27,8 @@ def get_items(request: WSGIRequest | HttpRequest = None):
         })
 
     try:
-        items = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999', uid_cols=True, forcedisplay=[126])
+        items = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999',
+                            forcedisplay=displays['item'].keys())
     except Exception:
         return HttpResponseNotFound()
 
@@ -37,24 +41,40 @@ def get_locations(request: WSGIRequest = None) -> JsonResponse:
     return JsonResponse({'locations': locations})
 
 
-def get_item(request: WSGIRequest | HttpRequest, itemtype, item_id):
-    if itemtype is None or item_id is None:
+def get_item(request: WSGIRequest | HttpRequest, itemtype, item_uuid):
+    if itemtype is None or item_uuid is None:
         return HttpResponseNotFound()
 
+    criteria = [{
+        'field': 'uuid',
+        'searchtype': 'contains',
+        'value': item_uuid
+    }]
+
+    forcedisplay = (list(displays['item'].keys()) + list(displays['computer'].keys())) if itemtype == 'Computer' else displays['item'].keys()
     try:
-        item = glpi.get_item(itemtype=itemtype, item_id=item_id)
+        item = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999',
+                           forcedisplay=forcedisplay)[0]
     except Exception:
         return HttpResponseNotFound()
+    user = get_contact_info(item[str(list(displays['item'].keys())[-1])])
 
-    return JsonResponse({'item': item})
+    item.pop(list(displays['item'].keys())[-1])
+    item.popitem()
+
+    return JsonResponse({'result': {
+        'item': item,
+        'user': user
+    }})
 
 
-def refactor_names(items: list) -> list:
-    for index, item in enumerate(items):
-        keys = list(item.keys())
-        for key in keys:
-            new_key = key.split('.')[1].lower()
-            item[new_key] = item[key]
-            del item[key]
+def get_contact_info(username):
+    criteria = [{
+        'field': 'User.name',
+        'searchtype': 'contains',
+        'value': username
+    }]
 
-    return items
+    user = glpi.search(itemtype='user', criteria=criteria, range='0-999999', forcedisplay=displays['user'])[0]
+    del user[list(user.keys())[0]]
+    return user

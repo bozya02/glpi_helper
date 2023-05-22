@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block content %}
     <div>
@@ -8,24 +9,51 @@
             {% csrf_token %}
             {{ form }}
         </form>
+        {% if item %}
+            <div>
+                {% for display_key, type_name in displays.items %}
+                    {% for type_key, display_name in type_name.items %}
+                        {% if type_key in item.keys %}
+                            {% if item|get_item_value:type_key|is_list %}
+                                <div>
+                                    {{ display_name }}:
+                                    <ul>
+                                        {% for subvalue in item|get_item_value:type_key %}
+                                            <li>{{ subvalue }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% else %}
+                                <div>{{ display_name }}:&emsp;{{ item|get_item_value:type_key }}</div>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
 
-        <div>
-            <div>
-                {{ item.id }}
+
+                {% comment %}{% for key, value in item.items %}
+                    {% if displays.item|get_item_value:key %}
+                        <div>{{ displays.item|get_item_value:key }} {{ value }}</div>
+                    {% else %}
+                        <div>{{ displays.computer|get_item_value:key }}
+                            {% if value %}
+
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}{% endcomment %}
             </div>
+
             <div>
-                {{ item.name }}
+                <h2>Ответственное лицо</h2>
+                {% for key, value in user.items %}
+                    {% if value %}
+                        <div>{{ displays.user|get_item_value:key }} {{ value }}</div>
+                    {% endif %}
+                {% endfor %}
+
             </div>
-            <div>
-                {{ item.serial }}
-            </div>
-            <div>
-                {{ item.otherserial }}
-            </div>
-            <div>
-                {{ item.comment }}
-            </div>
-        </div>
+        {% endif %}
     </div>
 {% endblock %}
 
