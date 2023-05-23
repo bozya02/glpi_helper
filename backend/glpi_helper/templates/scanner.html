@@ -3,7 +3,7 @@
 
 {% block content %}
     <div>
-        <h1>File Scanner</h1>
+        <h1>QR Scanner</h1>
 
         <form enctype="multipart/form-data" method="post" id="qr-form">
             {% csrf_token %}
@@ -11,49 +11,47 @@
         </form>
         {% if item %}
             <div>
-                {% for display_key, type_name in displays.items %}
-                    {% for type_key, display_name in type_name.items %}
-                        {% if type_key in item.keys %}
-                            {% if item|get_item_value:type_key|is_list %}
-                                <div>
-                                    {{ display_name }}:
-                                    <ul>
-                                        {% for subvalue in item|get_item_value:type_key %}
-                                            <li>{{ subvalue }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            {% else %}
-                                <div>{{ display_name }}:&emsp;{{ item|get_item_value:type_key }}</div>
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
-                {% endfor %}
-
-
-                {% comment %}{% for key, value in item.items %}
-                    {% if displays.item|get_item_value:key %}
-                        <div>{{ displays.item|get_item_value:key }} {{ value }}</div>
-                    {% else %}
-                        <div>{{ displays.computer|get_item_value:key }}
-                            {% if value %}
-
-                            {% endif %}
+                {% for display_key, display_name in display.items %}
+                    {% if item|get_item_value:display_key|is_list %}
+                        <div>
+                            {{ display_name }}:
+                            <ul>
+                                {% for subvalue in item|get_item_value:display_key %}
+                                    <li>{{ subvalue }}</li>
+                                {% endfor %}
+                            </ul>
                         </div>
+                    {% else %}
+                        <div>{{ display_name }}:&emsp;{{ item|get_item_value:display_key }}</div>
                     {% endif %}
-                {% endfor %}{% endcomment %}
+                {% endfor %}
             </div>
 
             <div>
                 <h2>Ответственное лицо</h2>
-                {% for key, value in user.items %}
-                    {% if value %}
-                        <div>{{ displays.user|get_item_value:key }} {{ value }}</div>
-                    {% endif %}
-                {% endfor %}
-
+                {% if not user %}
+                    <div>Не указано</div>
+                {% endif %}
+                <div>{{ user }}</div>
             </div>
         {% endif %}
     </div>
+
+    <div>
+    {% if item %}
+        <h3>Отправить заявку</h3>
+        <form method="post" id="ticket-form">
+            {% csrf_token %}
+            {{ ticket_form.title.label_tag }} {{ ticket_form.title }}<br>
+            {{ ticket_form.description.label_tag }} {{ ticket_form.description }}<br>
+            {{ ticket_form.anonymous.label_tag }} {{ ticket_form.anonymous }}<br>
+
+            <div id="auth-fields" style="display: none">
+                {{ ticket_form.username.label_tag }} {{ ticket_form.username }}<br>
+                {{ ticket_form.password.label_tag }} {{ ticket_form.password }}<br>
+            </div>
+            <input type="submit" value="Отправить">
+        </form>
+    {% endif %}
 {% endblock %}
 

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block content %}
     <div>
@@ -11,23 +12,37 @@
 
         <table>
             <thead>
-                <tr>
-                    <th>Номер</th>
-                    <th>Название</th>
-                    <th>Серийный</th>
-                    <th>Инвентарный</th>
-                </tr>
+            <tr>
+                <th>Номер</th>
+                {% for item in display.values %}
+                    <th>{{ item }}</th>
+                {% endfor %}
+                <th>Ответственный</th>
+            </tr>
             </thead>
             <tbody>
             {% for item in items %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ item.item.name }}</td>
-                    <td>{{ item.item.serial }}</td>
-                    <td>{{ item.item.otherserial }}</td>
+                    {% for key, value in display.items %}
+                        <td>{{ item.item|get_item_value:key }}</td>
+                    {% endfor %}
+                    <td>{{ item.user }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% if items %}
+        <form action="{% url 'clear_table' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Очистить таблицу</button>
+        </form>
+
+        <form action="{% url 'download_table' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Скачать таблицу</button>
+        </form>
+    {% endif %}
 {% endblock %}

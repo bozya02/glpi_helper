@@ -28,7 +28,7 @@ def get_items(request: WSGIRequest | HttpRequest = None):
 
     try:
         items = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999',
-                            forcedisplay=displays['item'].keys())
+                            forcedisplay=forces['item'].keys())
     except Exception:
         return HttpResponseNotFound()
 
@@ -51,15 +51,16 @@ def get_item(request: WSGIRequest | HttpRequest, itemtype, item_uuid):
         'value': item_uuid
     }]
 
-    forcedisplay = (list(displays['item'].keys()) + list(displays['computer'].keys())) if itemtype == 'Computer' else displays['item'].keys()
+    forcedisplay = (list(forces['item'].keys()) + list(forces['computer'].keys())) if itemtype == 'Computer' else \
+        forces['item'].keys()
     try:
         item = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999',
                            forcedisplay=forcedisplay)[0]
     except Exception:
         return HttpResponseNotFound()
-    user = get_contact_info(item[str(list(displays['item'].keys())[-1])])
+    user = get_contact_info(item[str(list(forces['item'].keys())[-1])])
 
-    item.pop(list(displays['item'].keys())[-1])
+    item.pop(list(forces['item'].keys())[-1])
     item.popitem()
 
     return JsonResponse({'result': {
@@ -75,6 +76,24 @@ def get_contact_info(username):
         'value': username
     }]
 
-    user = glpi.search(itemtype='user', criteria=criteria, range='0-999999', forcedisplay=displays['user'])[0]
+    user = glpi.search(itemtype='user', criteria=criteria, range='0-999999', forcedisplay=forces['user'])[0]
     del user[list(user.keys())[0]]
     return user
+
+
+def create_ticket(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    title = request.POST.get('title')
+    description = request.POST.get('description')
+    anonymous = request.POST.get('anonymous')
+
+    print(request.POST)
+
+    user_glpi = GLPI(url=url, apptoken=app_token, auth=user_token if anonymous else [username, password],
+                     verify_certs=False)
+    ticket_data = {
+        'name': title,
+        'content': description
+    }
+    print(user_glpi.add('ticket', ticket_data))
