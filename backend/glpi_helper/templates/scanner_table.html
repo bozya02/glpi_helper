@@ -35,13 +35,14 @@
     </div>
 
     {% if items %}
-        <form action="{% url 'clear_table' %}" method="post">
+        <form action="{% url 'clear_table' %}" method="GET">
             {% csrf_token %}
             <button type="submit">Очистить таблицу</button>
         </form>
 
-        <form action="{% url 'download_table' %}" method="post">
+        <form action="{% url 'download_table' %}" method="GET">
             {% csrf_token %}
+            <input type="hidden" value="{{ items|generate_ids }}">
             <button type="submit">Скачать таблицу</button>
         </form>
     {% endif %}

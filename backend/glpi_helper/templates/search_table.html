@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+    <h1>QR Scanner</h1>
+
+    <form id="search-form" method="POST">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit">Отправить</button>
+        <button type="button" id="add-criteria-button">Добавить критерий</button>
+        <div id="criteria-container"></div>
+    </form>
+
+    {% if items %}
+        <table>
+            <thead>
+            <tr>
+                <th>Номер</th>
+                {% for item in display.values %}
+                    <th>{{ item }}</th>
+                {% endfor %}
+                <th>Ответственный</th>
+                <th>QR-код</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    {% for key, value in display.items %}
+                        <td>{{ item.item|get_item_value:key }}</td>
+                    {% endfor %}
+                    <td>{{ item.user }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'download_qr' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_id" value="{{ item.item|get_item_value:2 }}">
+                            <input type="hidden" name="itemtype" value="{{ itemtype }}">
+                            <button type="submit">Сгенерировать QR-коды</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <form method="GET" action="{% url 'download_table' %}">
+            {% csrf_token %}
+            <input type="hidden" name="items" value="{{ items }}">
+            <button type="submit">Скачать таблицу</button>
+        </form>
+        <form method="POST" action="{% url 'download_qr' %}">
+            {% csrf_token %}
+            <input type="hidden" name="item_ids" value="{{ items|generate_ids }}">
+            <input type="hidden" name="itemtype" value="{{ itemtype }}">
+            <button type="submit">Сгенерировать QR-коды</button>
+        </form>
+    {% endif %}
+
+    {#    <script>#}
+    {#        document.addEventListener('DOMContentLoaded', function() {#}
+    {#            const addCriteriaButton = document.getElementById('add-criteria-button');#}
+    {#            const criteriaContainer = document.getElementById('criteria-container');#}
+    {##}
+    {#            addCriteriaButton.addEventListener('click', function() {#}
+    {#                const criteriaField = document.createElement('div');#}
+    {#                criteriaField.innerHTML = `#}
+    {#                    <select name="criteria[]" class="form-select">#}
+    {#                        <option value="">Выберите критерий</option>#}
+    {#                        <!-- Здесь добавьте опции для выбора критериев -->#}
+    {#                    </select>#}
+    {#                `;#}
+    {#                criteriaContainer.appendChild(criteriaField);#}
+    {#            });#}
+    {#        });#}
+    {#    </script>#}
+{% endblock %}

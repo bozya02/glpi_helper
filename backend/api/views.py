@@ -2,6 +2,8 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse, HttpResponseNotFound, HttpRequest
 from glpi_api import GLPI
 import json
+
+from api.models import Item
 from forcedisplays import *
 
 import forcedisplays
@@ -12,11 +14,8 @@ user_token = ['glpi', 'adminBozya02']
 glpi = GLPI(url=url, apptoken=app_token, auth=user_token, verify_certs=False)
 
 
-def get_items(request: WSGIRequest | HttpRequest = None):
+def get_items(request: WSGIRequest | HttpRequest = None, itemtype = None):
     criteria = []
-    itemtype = request.GET.get('itemtype')
-    if not itemtype:
-        itemtype = 'Computer'
     for param in request.GET:
         if param == 'itemtype':
             continue
@@ -26,13 +25,22 @@ def get_items(request: WSGIRequest | HttpRequest = None):
             'value': request.GET.get(param)
         })
 
+    forcedisplay = (list(forces['item'].keys()) + list(forces['computer'].keys())) if itemtype == 'Computer' else \
+        forces['item'].keys()
     try:
         items = glpi.search(itemtype=itemtype, criteria=criteria, range='0-999999',
-                            forcedisplay=forces['item'].keys())
+                            forcedisplay=forcedisplay)
     except Exception:
         return HttpResponseNotFound()
 
-    return JsonResponse({'items': items})
+    result = []
+    users = {}
+    for item in items:
+        username = item[str(list(forces['item'].keys())[-1])]
+        if not username in users:
+            users[username] = get_contact_info(username)
+        result.append({'item': item, 'user': users[username]})
+    return JsonResponse({'items': result})
 
 
 def get_locations(request: WSGIRequest = None) -> JsonResponse:
@@ -41,14 +49,19 @@ def get_locations(request: WSGIRequest = None) -> JsonResponse:
     return JsonResponse({'locations': locations})
 
 
-def get_item(request: WSGIRequest | HttpRequest, itemtype, item_uuid):
-    if itemtype is None or item_uuid is None:
+def get_item(request: WSGIRequest | HttpRequest, itemtype, guid):
+    if itemtype is None or guid is None:
+        return HttpResponseNotFound()
+
+    item_id = Item.get_item_id_by_guid(guid)
+
+    if item_id is None:
         return HttpResponseNotFound()
 
     criteria = [{
-        'field': 'uuid',
+        'field': 'id',
         'searchtype': 'contains',
-        'value': item_uuid
+        'value': item_id
     }]
 
     forcedisplay = (list(forces['item'].keys()) + list(forces['computer'].keys())) if itemtype == 'Computer' else \
@@ -59,9 +72,6 @@ def get_item(request: WSGIRequest | HttpRequest, itemtype, item_uuid):
     except Exception:
         return HttpResponseNotFound()
     user = get_contact_info(item[str(list(forces['item'].keys())[-1])])
-
-    item.pop(list(forces['item'].keys())[-1])
-    item.popitem()
 
     return JsonResponse({'result': {
         'item': item,
@@ -75,10 +85,13 @@ def get_contact_info(username):
         'searchtype': 'contains',
         'value': username
     }]
+    try:
+        user = glpi.search(itemtype='user', criteria=criteria, range='0-10', forcedisplay=forces['user'])[0]
+    except:
+        return ''
 
-    user = glpi.search(itemtype='user', criteria=criteria, range='0-999999', forcedisplay=forces['user'])[0]
     del user[list(user.keys())[0]]
-    return user
+    return ' '.join(filter(None, list(user.values())))
 
 
 def create_ticket(request):
@@ -88,7 +101,6 @@ def create_ticket(request):
     description = request.POST.get('description')
     anonymous = request.POST.get('anonymous')
 
-    print(request.POST)
 
     user_glpi = GLPI(url=url, apptoken=app_token, auth=user_token if anonymous else [username, password],
                      verify_certs=False)

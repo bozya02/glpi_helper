@@ -1,13 +1,18 @@
 import cv2
 import numpy as np
 import pyzbar.pyzbar as pyzbar
+from PIL import Image
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image
 from io import BytesIO
-from forcedisplays import *
 
+from config import DEFAULT_QR
+from forcedisplays import *
+import qrcode
+from reportlab.pdfgen import canvas
+from api.models import Item
 
 def recognize_qr(file):
     inp = np.asarray(bytearray(file), dtype=np.uint8)
@@ -77,3 +82,55 @@ def generate_xlsx(items):
     excel_file.seek(0)
 
     return excel_file
+
+def generate_qr(item_ids, itemtype):
+    if len(item_ids) == 1:
+        # Генерация фотографии QR-кода
+
+        item_id = item_ids[0]
+
+        db_item = Item.check_or_create_item(item_id, itemtype)
+
+        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+        qr.add_data(DEFAULT_QR.format(db_item.item_type, db_item.guid))
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+
+        return buffer
+    else:
+        # Генерация PDF-файла
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer)
+
+        x = 10
+        y = 700
+
+        for i, item_id in enumerate(item_ids):
+            print(item_id)
+
+            db_item = Item.check_or_create_item(item_id, itemtype)
+
+            qr = qrcode.QRCode(version=1, box_size=10, border=4)
+            qr.add_data(DEFAULT_QR.format(db_item.item_type, db_item.guid))
+            qr.make(fit=True)
+
+            img = qr.make_image(fill_color="black", back_color="white")
+
+            pdf.drawInlineImage(img, x, y, width=130, height=130)
+
+            if i % 4 == 3:
+                x = 10
+                y -= 150
+            else:
+                x += 150
+
+        pdf.save()
+
+        buffer.seek(0)
+
+        return buffer
