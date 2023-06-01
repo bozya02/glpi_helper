@@ -44,9 +44,11 @@
             {% csrf_token %}
             {{ ticket_form.title.label_tag }} {{ ticket_form.title }}<br>
             {{ ticket_form.description.label_tag }} {{ ticket_form.description }}<br>
-            {{ ticket_form.anonymous.label_tag }} {{ ticket_form.anonymous }}<br>
+            {% if anon %}
+                {{ ticket_form.anonymous.label_tag }} {{ ticket_form.anonymous }}<br>
+            {% endif %}
 
-            <div id="auth-fields" style="display: none">
+            <div id="auth-fields" style="display: {% if anon %} none {% else %} block {% endif %} ">
                 {{ ticket_form.username.label_tag }} {{ ticket_form.username }}<br>
                 {{ ticket_form.password.label_tag }} {{ ticket_form.password }}<br>
             </div>

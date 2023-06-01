@@ -1,5 +1,6 @@
 from django import forms
 
+import config
 from config import ITEM_TYPES
 
 
@@ -10,7 +11,7 @@ class ScannerForm(forms.Form):
 class TicketForm(forms.Form):
     title = forms.CharField(label='Заголовок')
     description = forms.CharField(label='Описание', widget=forms.Textarea)
-    anonymous = forms.BooleanField(label='Анонимная?', required=False, initial=True)
+    anonymous = forms.BooleanField(label='Анонимная?', required=False, initial=config.CAN_ANON)
     username = forms.CharField(label='Логин', required=False)
     password = forms.CharField(label='Пароль', widget=forms.PasswordInput, required=False)
 

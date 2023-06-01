@@ -6,3 +6,5 @@ ITEM_TYPES = [
 ]
 
 DEFAULT_QR = 'http://10.3.6.141:8000/scanner/{0}/{1}'
+
+CAN_ANON = False

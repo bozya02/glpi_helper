@@ -6,6 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 
 import api.views
+import config
 from forcedisplays import *
 from glpi_helper import service
 from .forms import *
@@ -17,9 +18,9 @@ def home(request: WSGIRequest) -> HttpResponse:
 
 
 def scanner(request: WSGIRequest, itemtype: str = None, item_guid: int = None) -> JsonResponse | HttpResponse:
-    # api.views.create_ticket('test_ticket', 'test_ticket123', 123, '213213')
     ticket_form = TicketForm()
     ticket_form.fields['anonymous'].widget.attrs['onchange'] = 'switchVisible(event);'
+
     form = ScannerForm()
     form.fields['file'].widget.attrs['onchange'] = 'this.form.submit();'
 
@@ -39,7 +40,7 @@ def scanner(request: WSGIRequest, itemtype: str = None, item_guid: int = None) -
             ticket_form.fields['anonymous'].widget.attrs['onchange'] = 'switchVisible(event);'
             api.views.create_ticket(request)
 
-    context = {'form': form, 'ticket_form': ticket_form}
+    context = {'form': form, 'ticket_form': ticket_form, 'anon': config.CAN_ANON}
     if not (itemtype is None or item_guid is None):
         content = json.loads(api.views.get_item(request, itemtype, item_guid).content)['result']
         context['item'] = content['item']
