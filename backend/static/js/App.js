@@ -15,3 +15,28 @@ function switchVisible(event) {
         loginFields.style.display = 'block';
     }
 }
+
+function selectAll(checkboxAll) {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][name="item_check"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = checkboxAll.checked
+    })
+}
+
+function submitForm(checkbox) {
+    const form = checkbox.closest('form');
+    const formData = new FormData(form);
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            // Обработка успешного ответа
+            console.log(data);
+        })
+        .catch(error => {
+            // Обработка ошибки
+            console.error(error);
+        });
+}

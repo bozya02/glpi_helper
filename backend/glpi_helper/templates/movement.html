@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+    <h2>Перемещение {{ movement.id }}</h2>
+    <div>Сотруднику:&emsp;{{ movement.username }}</div>
+    <div>Дата:&emsp;{{ movement.date|date:"d.m.Y" }}</div>
+    <div>До даты:&emsp;{{ movement.move_date|date:"d.m.Y" }}</div>
+    <div>Местоположение:&emsp;{{ movement.location }}</div>
+    <table>
+        <thead>
+        <tr>
+            <th>Номер</th>
+            {% for item in display.values %}
+                <th>{{ item }}</th>
+            {% endfor %}
+            <th>Ответственный</th>
+            <th>Вернули</th>
+        </tr>
+        </thead>
+        {% for item in items %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                {% for key, value in display.items %}
+                    <td>{{ item.item|get_item_value:key }}</td>
+                {% endfor %}
+                <td>{{ item.user }}</td>
+            <td><input type="checkbox" {% if item.is_returned %}checked{% endif %} ></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}o

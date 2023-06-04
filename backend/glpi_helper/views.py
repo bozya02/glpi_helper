@@ -3,9 +3,10 @@ import json
 
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 
 import api.views
+from api.models import *
 import config
 from forcedisplays import *
 from glpi_helper import service
@@ -17,7 +18,7 @@ def home(request: WSGIRequest) -> HttpResponse:
     return render(request, 'home.html')
 
 
-def scanner(request: WSGIRequest, itemtype: str = None, item_guid: int = None) -> JsonResponse | HttpResponse:
+def scanner_view(request: WSGIRequest, itemtype: str = None, item_guid: int = None) -> JsonResponse | HttpResponse:
     ticket_form = TicketForm()
     ticket_form.fields['anonymous'].widget.attrs['onchange'] = 'switchVisible(event);'
 
@@ -46,10 +47,12 @@ def scanner(request: WSGIRequest, itemtype: str = None, item_guid: int = None) -
         context['item'] = content['item']
         context['user'] = content['user']
         context['display'] = service.get_qr_display(itemtype.lower() == 'computer')
+
+    print(context)
     return render(request, 'scanner.html', context)
 
 
-def scanner_table(request):
+def scanner_table_view(request):
     items = request.session.get('items', [])
     if request.method == 'POST':
         form = ScannerForm(request.POST, request.FILES)
@@ -72,20 +75,57 @@ def scanner_table(request):
     return render(request, 'scanner_table.html', context)
 
 
-def search_table(request):
+def search_table_view(request):
     items = []
+    selected_items = request.session.get('selected_items', [])
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
             itemtype = form.cleaned_data['itemtype']
             items = json.loads(api.views.get_items(request, itemtype).content)['items']
-
+            request.session['search_items'] = items
     else:
         itemtype = ITEM_TYPES[0]
         form = SearchForm()
 
-    context = {'form': form, 'items': items, 'display': service.get_table_display(), 'itemtype': itemtype}
+    if not items:
+        items = selected_items
+
+    movement_form = MovementForm()
+
+    context = {'form': form,
+               'items': items,
+               'display': service.get_table_display(),
+               'itemtype': itemtype,
+               'selected_items': selected_items,
+               'movement_form': movement_form
+               }
+
     return render(request, 'search_table.html', context)
+
+
+def movements_view(request):
+    movements = Movement.objects.all()
+    return render(request, 'movements.html', context={'movements': movements})
+
+
+def movement_view(request, movement_id):
+    movement = get_object_or_404(Movement, pk=movement_id)
+    items = json.loads(api.views.get_items_by_movement(request, movement).content)['result']
+
+    print(items)
+    return render(request, 'movement.html',
+                  context={'movement': movement, 'items': items, 'display': service.get_table_display()})
+
+
+def create_movement_view(request):
+    movement_form = MovementForm(request.POST)
+    if movement_form.is_valid():
+        selected_items = request.session['selected_items']
+        api.views.create_movement(request)
+        request.session['selected_items'] = []
+
+    return redirect('search_table')
 
 
 def clear_table(request):
@@ -95,7 +135,8 @@ def clear_table(request):
 
 
 def download_table(request):
-    items = request.POST.get('items')
+    session_item = request.GET.get('items')
+    items = request.session.get(session_item, [])
     excel_file = service.generate_xlsx(items)
     response = HttpResponse(excel_file.read(),
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -105,23 +146,37 @@ def download_table(request):
 
 
 def download_qr(request):
-    item_ids = request.POST.get('item_ids')
-    item_id = request.POST.get('item_id')
+    items = json.loads(request.POST.get('items'))
+    buffer = generate_qr(items)
 
-    if item_ids:
-        item_ids = json.loads(item_ids.replace("'", '"'))
-
-    itemtype = request.POST.get('itemtype').replace("'", '"')
-
-    buffer = generate_qr(item_ids if item_ids else [item_id], itemtype)
-
-    if not item_ids:
-        response = HttpResponse(content_type='image/png')
-        response['Content-Disposition'] = f'attachment; filename="qr_code_{itemtype}_{item_id}.png"'
-        response.write(buffer.getvalue())
-    else:
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="qr_codes.pdf"'
-        response.write(buffer.getvalue())
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="qr_codes.pdf"'
+    response.write(buffer.getvalue())
 
     return response
+
+
+def update_selected_items(request):
+    if request.method == 'POST':
+        selected_items = request.session.get('selected_items', [])
+        select_all = request.POST.get('select-all')
+        item = request.POST.get('item')
+
+        if item:
+            item = json.loads(item)
+            if item in selected_items:
+                selected_items.remove(item)
+            else:
+                selected_items.append(item)
+        else:
+            if select_all:
+                items = json.loads(request.POST.get('items'))
+                selected_items = items
+            else:
+                selected_items = []
+
+        request.session['selected_items'] = selected_items
+
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'error'})

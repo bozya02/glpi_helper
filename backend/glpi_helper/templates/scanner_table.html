@@ -40,9 +40,9 @@
             <button type="submit">Очистить таблицу</button>
         </form>
 
-        <form action="{% url 'download_table' %}" method="GET">
+        <form action="{% url 'download_table' %}" method="POST">
             {% csrf_token %}
-            <input type="hidden" value="{{ items|generate_ids }}">
+            <input type="hidden" name="items" value="items">
             <button type="submit">Скачать таблицу</button>
         </form>
     {% endif %}

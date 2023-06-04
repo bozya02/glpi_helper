@@ -1,5 +1,10 @@
+from datetime import date
+import json
+
+import django.utils.timezone
 from django import forms
 
+import api.views
 import config
 from config import ITEM_TYPES
 
@@ -22,3 +27,18 @@ class SearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['itemtype'].widget.attrs['class'] = 'form-select'
+
+
+class MovementForm(forms.Form):
+    user = forms.CharField(label='Пользователь',
+                           widget=forms.Select(
+                               choices=[tuple([name, name]) for name in
+                                        json.loads(api.views.get_users().content)['result']]),
+                           )
+    location = forms.CharField(label='Местоположение',
+                               widget=forms.Select(
+                                   choices=[tuple([name, name]) for name in
+                                            json.loads(api.views.get_locations().content)['result']])
+                               )
+    date = forms.DateField(label='Дата', initial=django.utils.timezone.now(),
+                           widget=forms.DateInput(attrs={'min': date.today().strftime('%d.%m.%Y')}))

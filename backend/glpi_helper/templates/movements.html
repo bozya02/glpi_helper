@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Перемещения</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>№</th>
+            <th>Дата</th>
+            <th>До даты</th>
+            <th>Сотрудник</th>
+            <th>Местоположение</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for movement in movements %}
+            <tr>
+                <td><a href="{% url 'movement' movement.id %}">{{ forloop.counter }}</a></td>
+                <td>{{ movement.date|date:"d.m.Y" }}</td>
+                <td>{{ movement.move_date|date:"d.m.Y" }}</td>
+                <td>{{ movement.username }}</td>
+                <td>{{ movement.location }}</td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+{% endblock %}

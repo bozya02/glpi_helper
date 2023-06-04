@@ -1,18 +1,24 @@
+import os.path
+
 import cv2
 import numpy as np
 import pyzbar.pyzbar as pyzbar
-from PIL import Image
+from PIL import Image as PilImg
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image
 from io import BytesIO
+import math
+import pytesseract
+from reportlab.lib.pagesizes import letter
 
 from config import DEFAULT_QR
 from forcedisplays import *
 import qrcode
 from reportlab.pdfgen import canvas
 from api.models import Item
+
 
 def recognize_qr(file):
     inp = np.asarray(bytearray(file), dtype=np.uint8)
@@ -83,54 +89,69 @@ def generate_xlsx(items):
 
     return excel_file
 
-def generate_qr(item_ids, itemtype):
-    if len(item_ids) == 1:
-        # Генерация фотографии QR-кода
 
-        item_id = item_ids[0]
+def generate_qr(items):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
 
-        db_item = Item.check_or_create_item(item_id, itemtype)
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    template_path = os.path.join(app_dir, 'qr_template.png')
 
-        qr = qrcode.QRCode(version=1, box_size=10, border=4)
-        qr.add_data(DEFAULT_QR.format(db_item.item_type, db_item.guid))
-        qr.make(fit=True)
+    template_image = cv2.imread(template_path)
+    template_height, template_width, _ = template_image.shape
 
-        img = qr.make_image(fill_color="black", back_color="white")
+    qr_width = 120
+    qr_height = 120
 
-        buffer = BytesIO()
-        img.save(buffer, format='PNG')
-        buffer.seek(0)
+    pdf_width, pdf_height = letter
 
-        return buffer
-    else:
-        # Генерация PDF-файла
-        buffer = BytesIO()
-        pdf = canvas.Canvas(buffer)
+    num_columns = int(pdf_width / template_width)
+    num_rows = int(pdf_height / template_height)
 
-        x = 10
-        y = 700
+    x_text, y_text = find_text_position(template_image, template_image)
 
-        for i, item_id in enumerate(item_ids):
-            print(item_id)
+    num_pages = math.ceil(len(items) / (num_columns * num_rows))
 
-            db_item = Item.check_or_create_item(item_id, itemtype)
+    print(num_pages)
 
-            qr = qrcode.QRCode(version=1, box_size=10, border=4)
-            qr.add_data(DEFAULT_QR.format(db_item.item_type, db_item.guid))
-            qr.make(fit=True)
+    for page in range(num_pages):
+        pdf.showPage()
 
-            img = qr.make_image(fill_color="black", back_color="white")
+        for row in range(num_rows):
+            for column in range(num_columns):
+                index = page * (num_columns * num_rows) + row * num_columns + column
+                if index >= len(items):
+                    break
 
-            pdf.drawInlineImage(img, x, y, width=130, height=130)
+                item = items[index]
+                db_item = Item.check_or_create_item(item['id'], item['item_type'])
 
-            if i % 4 == 3:
-                x = 10
-                y -= 150
-            else:
-                x += 150
+                qr = qrcode.QRCode(version=1, box_size=10, border=1)
+                qr.add_data(DEFAULT_QR.format(db_item.item_type, db_item.guid))
+                qr.make(fit=True)
 
-        pdf.save()
+                img = qr.make_image(fill_color="black", back_color="white")
 
-        buffer.seek(0)
+                x = column * template_width
+                y = pdf_height - (row + 1) * template_height
 
-        return buffer
+                x_qr = x + (template_width - qr_width) - 2
+                y_qr = y + (template_height - qr_height) // 2
+
+                pdf.drawInlineImage(template_path, x, y, width=template_width, height=template_height)
+                pdf.drawInlineImage(img, x_qr, y_qr, width=qr_width, height=qr_height)
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
+
+def find_text_position(image, template):
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+    result = cv2.matchTemplate(gray_image, gray_template, cv2.TM_CCOEFF_NORMED)
+    _, _, _, max_loc = cv2.minMaxLoc(result)
+    w, h = template.shape[1], template.shape[0]
+    x = max_loc[0] + w // 2
+    y = max_loc[1] + h // 2
+    return x, y

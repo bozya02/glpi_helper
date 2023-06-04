@@ -2,17 +2,20 @@
 {% load custom_filters %}
 
 {% block content %}
-    <h1>QR Scanner</h1>
+    <h1>Поиск</h1>
 
     <form id="search-form" method="POST">
         {% csrf_token %}
         {{ form }}
         <button type="submit">Отправить</button>
         <button type="button" id="add-criteria-button">Добавить критерий</button>
+        <a href="{% url 'search_table' %}">
+            <button type="button" id="add-criteria-button">Только выбранные</button>
+        </a>
         <div id="criteria-container"></div>
     </form>
 
-    {% if items %}
+    {% if items or selected_items %}
         <table>
             <thead>
             <tr>
@@ -21,7 +24,13 @@
                     <th>{{ item }}</th>
                 {% endfor %}
                 <th>Ответственный</th>
-                <th>QR-код</th>
+                <th>
+                    <form method="POST" action="{% url 'update_selected_items' %}" id="select-all-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="items" value="{{ items|to_json }}">
+                        <input type="checkbox" name="select-all" onchange="selectAll(this) | submitForm(this)">
+                    </form>
+                </th>
             </tr>
             </thead>
             <tbody>
@@ -33,46 +42,33 @@
                     {% endfor %}
                     <td>{{ item.user }}</td>
                     <td>
-                        <form method="POST" action="{% url 'download_qr' %}">
+                        <form id="select-form" method="POST" action="{% url 'update_selected_items' %}">
                             {% csrf_token %}
-                            <input type="hidden" name="item_id" value="{{ item.item|get_item_value:2 }}">
-                            <input type="hidden" name="itemtype" value="{{ itemtype }}">
-                            <button type="submit">Сгенерировать QR-коды</button>
+                            <input type="hidden" name="item" value="{{ item|to_json }}">
+                            <input type="checkbox" name="item_check"
+                                   {% if item in selected_items %}checked{% endif %}
+                                   onchange="submitForm(this)">
                         </form>
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
-
         <form method="GET" action="{% url 'download_table' %}">
             {% csrf_token %}
-            <input type="hidden" name="items" value="{{ items }}">
+            <input type="hidden" name="items" value="selected_items">
             <button type="submit">Скачать таблицу</button>
         </form>
         <form method="POST" action="{% url 'download_qr' %}">
             {% csrf_token %}
-            <input type="hidden" name="item_ids" value="{{ items|generate_ids }}">
-            <input type="hidden" name="itemtype" value="{{ itemtype }}">
+            <input type="hidden" name="items" value="{{ selected_items|generate_ids }}">
             <button type="submit">Сгенерировать QR-коды</button>
         </form>
+        <form method="POST" action="{% url 'new_movement' %}">
+            {% csrf_token %}
+            {{ movement_form.as_p }}
+            <input type="hidden" name="items" value="{{ selected_items|generate_ids }}">
+            <input type="submit" value="Сохранить">
+        </form>
     {% endif %}
-
-    {#    <script>#}
-    {#        document.addEventListener('DOMContentLoaded', function() {#}
-    {#            const addCriteriaButton = document.getElementById('add-criteria-button');#}
-    {#            const criteriaContainer = document.getElementById('criteria-container');#}
-    {##}
-    {#            addCriteriaButton.addEventListener('click', function() {#}
-    {#                const criteriaField = document.createElement('div');#}
-    {#                criteriaField.innerHTML = `#}
-    {#                    <select name="criteria[]" class="form-select">#}
-    {#                        <option value="">Выберите критерий</option>#}
-    {#                        <!-- Здесь добавьте опции для выбора критериев -->#}
-    {#                    </select>#}
-    {#                `;#}
-    {#                criteriaContainer.appendChild(criteriaField);#}
-    {#            });#}
-    {#        });#}
-    {#    </script>#}
 {% endblock %}
