@@ -2,7 +2,7 @@
 {% load custom_filters %}
 
 {% block content %}
-    <h2>Перемещение {{ movement.id }}</h2>
+    <h1>Перемещение {{ movement.id }}</h1>
     <div>Сотруднику:&emsp;{{ movement.username }}</div>
     <div>Дата:&emsp;{{ movement.date|date:"d.m.Y" }}</div>
     <div>До даты:&emsp;{{ movement.move_date|date:"d.m.Y" }}</div>

@@ -41,7 +41,8 @@ class Movement(models.Model):
 
     def to_json(self):
         return {
-            'move_date': self.move_date,
+            'date': self.date.strftime('%d.%m.%Y'),
+            'move_date': self.move_date.strftime('%d.%m.%Y'),
             'location': self.location,
             'username': self.username,
         }

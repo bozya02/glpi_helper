@@ -1,7 +1,7 @@
 function menuToggle(event) {
     event.preventDefault();
     const navList = document.getElementById('nav-list');
-    navList.classList.toggle('active');
+    navList.classList.toggle('show');
 }
 
 

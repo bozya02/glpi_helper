@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="mt-5">Список отсканированных</h1>
+
+        <form enctype="multipart/form-data" method="post" id="qr-form" class="mt-4">
+            {% csrf_token %}
+            {{ form.file.label_tag }} {{ form.file|add_class:'form-control' }}
+        </form>
+
+        <div class="row mt-4">
+            {% for item in items %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <h6>№ {{ forloop.counter }}</h6>
+                                {% for key, value in display.items %}
+                                    <div class="col-6">
+                                        <h6 class="card-subtitle mb-1 text-muted">{{ value }}:</h6>
+                                        <p class="card-text">{{ item.item|get_item_value:key }}</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div>
+                                <h6 class="card-subtitle mb-1 text-muted">Ответственный:</h6>
+                                <p class="card-text">{{ item.user }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if items %}
+        <div class="container mt-4">
+            <div class="d-flex gap-3">
+                <form action="{% url 'clear_table' %}" method="GET">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Очистить таблицу</button>
+                </form>
+
+                <form action="{% url 'download_table' %}" method="GET">
+                    {% csrf_token %}
+                    <input type="hidden" name="items" value="items">
+                    <button type="submit" class="btn btn-primary">Скачать таблицу</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}

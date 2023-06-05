@@ -68,11 +68,14 @@ def get_item(request: WSGIRequest | HttpRequest, itemtype, guid):
         return HttpResponseNotFound()
 
     user = get_contact_info(item[str(list(forces['item'].keys())[-1])])
+    item_movements = db_item.itemmovement_set.filter(is_returned=False)
+    movement = item_movements.first().movement if item_movements else None
 
     return JsonResponse({'result': {
         'item': item,
         'user': user,
-        'item_type': itemtype
+        'item_type': itemtype,
+        'movement': movement.to_json() if movement else None
     }})
 
 

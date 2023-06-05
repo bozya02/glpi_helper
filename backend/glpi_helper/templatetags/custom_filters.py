@@ -6,6 +6,11 @@ register = template.Library()
 
 
 @register.filter
+def add_class(field, class_attr):
+    return field.as_widget(attrs={'class': class_attr})
+
+
+@register.filter
 def get_item_value(item, key):
     return item.get(str(key), '')
 

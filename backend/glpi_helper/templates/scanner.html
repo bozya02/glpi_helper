@@ -2,67 +2,106 @@
 {% load custom_filters %}
 
 {% block content %}
-    <div>
-        <h1>QR Scanner</h1>
+    <div class="container">
+        <h1 class="mt-5">Сканер QR</h1>
 
-        <form enctype="multipart/form-data" method="post" id="qr-form">
+        <form enctype="multipart/form-data" method="post" id="qr-form" class="mt-4">
             {% csrf_token %}
-            {{ form }}
+            {{ form.file.label_tag }} {{ form.file|add_class:'form-control' }}
         </form>
+
         {% if item %}
-            <div>
-                {% for display_key, display_name in display.items %}
-                    {% if item|get_item_value:display_key|is_list %}
-                        <div>
-                            {{ display_name }}:
-                            <ul>
-                                {% for subvalue in item|get_item_value:display_key %}
-                                    <li>{{ subvalue }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+            <div class="mt-4">
+                <div class="row">
+                    {% for display_key, display_name in display.items %}
+                        {% if item|get_item_value:display_key|is_list %}
+                            <div class="col-md-4">
+                                <h5>{{ display_name }}:</h5>
+                                <ul>
+                                    {% for subvalue in item|get_item_value:display_key %}
+                                        <li>{{ subvalue }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% else %}
+                            <div class="col-md-4">
+                                <h5>{{ display_name }}:</h5>
+                                <p>{{ item|get_item_value:display_key }}</p>
+                            </div>
+                        {% endif %}
+
+                        {% if forloop.counter|divisibleby:3 %}
+                            </div>
+                            <div class="row">
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+            </div>
+
+            <div class="mt-4">
+                <h3>Ответственное лицо</h3>
+                <div class="col-md-4">
+                    {% if not user %}
+                        <div>Не указано</div>
                     {% else %}
-                        <div>{{ display_name }}:&emsp;{{ item|get_item_value:display_key }}</div>
+                        <div>{{ user }}</div>
                     {% endif %}
-                {% endfor %}
+                </div>
             </div>
 
-            <div>
-                <h2>Ответственное лицо</h2>
-                {% if not user %}
-                    <div>Не указано</div>
-                {% endif %}
-                <div>{{ user }}</div>
-            </div>
-
-            {% if item.movement %}
-                <div>
-                    <h2>Информация о перемещении</h2>
-                    <div>Перемещено сотруднику: {{ item.movement.username }}</div>
-                    <div>Кабинет: {{ item.movement.location }}</div>
-                    <div>До даты: {{ item.movement.move_date }}</div>
+            {% if movement %}
+                <div class="mt-4">
+                    <h3>Информация о перемещении</h3>
+                    <div class="row">
+                        <div class="col">
+                            <h5>Перемещено сотруднику:</h5>
+                            <p>{{ movement.username }}</p>
+                        </div>
+                        <div class="col">
+                            <h5>Дата перемещения:</h5>
+                            <p>{{ movement.date }}</p>
+                        </div>
+                        <div class="col">
+                            <h5>До даты:</h5>
+                            <p>{{ movement.move_date }}</p>
+                        </div>
+                        <div class="col">
+                            <h5>Местоположение:</h5>
+                            <p>{{ movement.location }}</p>
+                        </div>
+                    </div>
                 </div>
             {% endif %}
         {% endif %}
     </div>
 
-    <div>
-    {% if item %}
-        <h3>Отправить заявку</h3>
-        <form method="post" id="ticket-form">
-            {% csrf_token %}
-            {{ ticket_form.title.label_tag }} {{ ticket_form.title }}<br>
-            {{ ticket_form.description.label_tag }} {{ ticket_form.description }}<br>
-            {% if anon %}
-                {{ ticket_form.anonymous.label_tag }} {{ ticket_form.anonymous }}<br>
-            {% endif %}
+    <div class="container mt-4">
+        {% if item %}
+            <h3>Отправить заявку</h3>
+            <form method="post" id="ticket-form">
+                {% csrf_token %}
+                <div class="mb-3">
+                    {{ ticket_form.title.label_tag }} {{ ticket_form.title|add_class:'form-control' }}
+                </div>
+                <div class="mb-3">
+                    {{ ticket_form.description.label_tag }} {{ ticket_form.description|add_class:'form-control' }}
+                </div>
+                {% if anon %}
+                    <div class="form-check mb-3">
+                        {{ ticket_form.anonymous.label_tag }} {{ ticket_form.anonymous|add_class:'form-check-input' }}
+                    </div>
+                {% endif %}
 
-            <div id="auth-fields" style="display: {% if anon %} none {% else %} block {% endif %} ">
-                {{ ticket_form.username.label_tag }} {{ ticket_form.username }}<br>
-                {{ ticket_form.password.label_tag }} {{ ticket_form.password }}<br>
-            </div>
-            <input type="submit" value="Отправить">
-        </form>
-    {% endif %}
+                <div id="auth-fields" style="display: {% if anon %} none {% else %} block {% endif %}">
+                    <div class="mb-3">
+                        {{ ticket_form.username.label_tag }} {{ ticket_form.username|add_class:'form-control' }}
+                    </div>
+                    <div class="mb-3">
+                        {{ ticket_form.password.label_tag }} {{ ticket_form.password|add_class:'form-control' }}
+                    </div>
+                </div>
+                <input type="submit" value="Отправить" class="btn btn-primary">
+            </form>
+        {% endif %}
+    </div>
 {% endblock %}
-

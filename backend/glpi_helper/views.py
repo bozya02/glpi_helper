@@ -46,13 +46,13 @@ def scanner_view(request: WSGIRequest, itemtype: str = None, item_guid: int = No
         content = json.loads(api.views.get_item(request, itemtype, item_guid).content)['result']
         context['item'] = content['item']
         context['user'] = content['user']
+        context['movement'] = content['movement']
         context['display'] = service.get_qr_display(itemtype.lower() == 'computer')
 
-    print(context)
     return render(request, 'scanner.html', context)
 
 
-def scanner_table_view(request):
+def scanner_list_view(request):
     items = request.session.get('items', [])
     if request.method == 'POST':
         form = ScannerForm(request.POST, request.FILES)
@@ -72,7 +72,7 @@ def scanner_table_view(request):
         form.fields['file'].widget.attrs['onchange'] = 'this.form.submit();'
 
     context = {'form': form, 'items': items, 'display': service.get_table_display()}
-    return render(request, 'scanner_table.html', context)
+    return render(request, 'scanner_list.html', context)
 
 
 def search_table_view(request):
@@ -121,7 +121,6 @@ def movement_view(request, movement_id):
 def create_movement_view(request):
     movement_form = MovementForm(request.POST)
     if movement_form.is_valid():
-        selected_items = request.session['selected_items']
         api.views.create_movement(request)
         request.session['selected_items'] = []
 
