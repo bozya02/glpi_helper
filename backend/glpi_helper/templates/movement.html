@@ -3,30 +3,60 @@
 
 {% block content %}
     <h1>Перемещение {{ movement.id }}</h1>
-    <div>Сотруднику:&emsp;{{ movement.username }}</div>
-    <div>Дата:&emsp;{{ movement.date|date:"d.m.Y" }}</div>
-    <div>До даты:&emsp;{{ movement.move_date|date:"d.m.Y" }}</div>
-    <div>Местоположение:&emsp;{{ movement.location }}</div>
-    <table>
+    <div class="row">
+        <div class="col-md-3">
+            <h5>Сотруднику:</h5>
+            <p>{{ movement.username }}</p>
+        </div>
+        <div class="col-md-3">
+            <h5>Дата:</h5>
+            <p>{{ movement.date|date:"d.m.Y" }}</p>
+        </div>
+        <div class="col-md-3">
+            <h5>До даты:</h5>
+            <p>{{ movement.move_date|date:"d.m.Y" }}</p>
+        </div>
+        <div class="col-md-3">
+            <h5>Местоположение:</h5>
+            <p>{{ movement.location }}</p>
+        </div>
+    </div>
+    <table class="table">
         <thead>
         <tr>
-            <th>Номер</th>
+            <th scope="col">Номер</th>
             {% for item in display.values %}
-                <th>{{ item }}</th>
+                <th scope="col">{{ item }}</th>
             {% endfor %}
-            <th>Ответственный</th>
-            <th>Вернули</th>
+            <th scope="col">Ответственный</th>
+            <th scope="col">Вернули</th>
         </tr>
         </thead>
+        <tbody>
         {% for item in items %}
             <tr>
-                <td>{{ forloop.counter }}</td>
+                <th scope="row">{{ forloop.counter }}</th>
                 {% for key, value in display.items %}
                     <td>{{ item.item|get_item_value:key }}</td>
                 {% endfor %}
                 <td>{{ item.user }}</td>
-            <td><input type="checkbox" {% if item.is_returned %}checked{% endif %} ></td>
+                <td>
+                    <form method="POST"
+                          action="{% url 'save_item_movement' item.item_movement_id %}">
+                        {% csrf_token %}
+                        <input type="checkbox" class="form-check-input" name="is_returned"
+                               onchange="submitCheckForm(this)"
+                               {% if item.is_returned %}checked disabled{% endif %}>
+                    </form>
+                </td>
             </tr>
         {% endfor %}
+        </tbody>
     </table>
-{% endblock %}o
+    <div class="mt-4">
+        <form method="POST" action="{% url 'movement' movement.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">Скачать документ</button>
+        </form>
+    </div>
+{% endblock %}

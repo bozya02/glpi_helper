@@ -6,69 +6,102 @@
 
     <form id="search-form" method="POST">
         {% csrf_token %}
-        {{ form }}
-        <button type="submit">Отправить</button>
-        <button type="button" id="add-criteria-button">Добавить критерий</button>
-        <a href="{% url 'search_table' %}">
-            <button type="button" id="add-criteria-button">Только выбранные</button>
-        </a>
+        <div class="row align-items-center mb-3">
+            <div class="col-md-6">
+                <label for="{{ form.itemtype.id_for_label }}"
+                       class="form-label">{{ form.itemtype.label_tag }}</label>
+                {{ form.itemtype|add_class:'form-select' }}
+            </div>
+            <div class="col-md-6">
+                <!-- Добавьте здесь другие поля ввода -->
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary">Отправить</button>
+                <a href="{% url 'search_table' %}" class="btn btn-secondary">Только выбранные</a>
+            </div>
+        </div>
         <div id="criteria-container"></div>
     </form>
 
     {% if items or selected_items %}
-        <table>
-            <thead>
-            <tr>
-                <th>Номер</th>
-                {% for item in display.values %}
-                    <th>{{ item }}</th>
-                {% endfor %}
-                <th>Ответственный</th>
-                <th>
-                    <form method="POST" action="{% url 'update_selected_items' %}" id="select-all-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="items" value="{{ items|to_json }}">
-                        <input type="checkbox" name="select-all" onchange="selectAll(this) | submitForm(this)">
-                    </form>
-                </th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for item in items %}
+        <div class="table-responsive mt-4">
+            <table class="table">
+                <thead>
                 <tr>
-                    <td>{{ forloop.counter }}</td>
-                    {% for key, value in display.items %}
-                        <td>{{ item.item|get_item_value:key }}</td>
+                    <th>Номер</th>
+                    {% for item in display.values %}
+                        <th>{{ item }}</th>
                     {% endfor %}
-                    <td>{{ item.user }}</td>
-                    <td>
-                        <form id="select-form" method="POST" action="{% url 'update_selected_items' %}">
+                    <th>Ответственный</th>
+                    <th>
+                        <form method="POST" action="{% url 'update_selected_items' %}" id="select-all-form">
                             {% csrf_token %}
-                            <input type="hidden" name="item" value="{{ item|to_json }}">
-                            <input type="checkbox" name="item_check"
-                                   {% if item in selected_items %}checked{% endif %}
-                                   onchange="submitForm(this)">
+                            <input type="hidden" name="items" value="{{ items|to_json }}">
+                            <input type="checkbox" name="select-all" class="form-check-input"
+                                   onchange="selectAll(this) | submitCheckForm(this)">
                         </form>
-                    </td>
+                    </th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        <form method="GET" action="{% url 'download_table' %}">
-            {% csrf_token %}
-            <input type="hidden" name="items" value="selected_items">
-            <button type="submit">Скачать таблицу</button>
-        </form>
-        <form method="POST" action="{% url 'download_qr' %}">
-            {% csrf_token %}
-            <input type="hidden" name="items" value="{{ selected_items|generate_ids }}">
-            <button type="submit">Сгенерировать QR-коды</button>
-        </form>
-        <form method="POST" action="{% url 'new_movement' %}">
-            {% csrf_token %}
-            {{ movement_form.as_p }}
-            <input type="hidden" name="items" value="{{ selected_items|generate_ids }}">
-            <input type="submit" value="Сохранить">
-        </form>
+                </thead>
+                <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        {% for key, value in display.items %}
+                            <td>{{ item.item|get_item_value:key }}</td>
+                        {% endfor %}
+                        <td>{{ item.user }}</td>
+                        <td>
+                            <form id="select-form" method="POST" action="{% url 'update_selected_items' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="item" value="{{ item|to_json }}">
+                                <input type="checkbox" name="item_check" class="form-check-input"
+                                       {% if item in selected_items %}checked{% endif %}
+                                       onchange="submitCheckForm(this)">
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-6 d-flex justify-content-start">
+                <form method="GET" action="{% url 'download_table' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="items" value="selected_items">
+                    <button type="submit" class="btn btn-primary">Скачать таблицу</button>
+                </form>
+                <form method="POST" action="{% url 'download_qr' %}" class="mx-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="items" value="{{ selected_items|generate_ids }}">
+                    <button type="submit" class="btn btn-primary">Сгенерировать QR-коды</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <form method="POST" action="{% url 'new_movement' %}" class="form-inline">
+                    {% csrf_token %}
+                    <div class="row mb-4">
+                        <div class="form-group col-md-4">
+                            {{ movement_form.user.label_tag }} {{ movement_form.user|add_class:'form-select' }}
+                        </div>
+                        <div class="form-group col-md-4">
+                            {{ movement_form.location.label_tag }} {{ movement_form.location|add_class:'form-select' }}
+                        </div>
+                        <div class="form-group col-md-4">
+                            {{ movement_form.date.label_tag }} {{ movement_form.date|add_class:'form-control' }}
+                            {{ movement_form.media }}
+                        </div>
+                    </div>
+                    <input type="hidden" name="items" value="{{ selected_items|generate_ids }}">
+                    <input type="submit" value="Сохранить" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}

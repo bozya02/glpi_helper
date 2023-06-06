@@ -1,12 +1,13 @@
 from datetime import date
 import json
 
-import django.utils.timezone
 from django import forms
+from django.utils import timezone
 
 import api.views
 import config
 from config import ITEM_TYPES
+from bootstrap_datepicker_plus.widgets import DatePickerInput
 
 
 class ScannerForm(forms.Form):
@@ -40,5 +41,9 @@ class MovementForm(forms.Form):
                                    choices=[tuple([name, name]) for name in
                                             json.loads(api.views.get_locations().content)['result']])
                                )
-    date = forms.DateField(label='Дата', initial=django.utils.timezone.now(),
-                           widget=forms.DateInput(attrs={'min': date.today().strftime('%d.%m.%Y')}))
+    date = forms.DateField(label='Дата', initial=timezone.now(),
+                           widget=DatePickerInput(format='%d.%m.%Y', options={'format': 'DD.MM.YYYY'}))
+
+
+class MovementsFilterForm(forms.Form):
+    date = forms.DateField(label='Дата', required=False, widget=DatePickerInput(options={'format': 'DD.MM.YYYY'}))

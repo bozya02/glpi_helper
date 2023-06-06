@@ -90,6 +90,43 @@ def generate_xlsx(items):
     return excel_file
 
 
+def generate_movement_xlsx(movement, items):
+    workbook = Workbook()
+    worksheet = workbook.active
+    display = get_table_display()
+
+    worksheet[f'A1'] = 'Сотруднику'
+    worksheet[f'B1'] = movement.username
+    worksheet[f'A2'] = 'Дата'
+    worksheet[f'B2'] = movement.date.strftime('%d.%m.%Y')
+    worksheet[f'A3'] = 'До даты'
+    worksheet[f'B3'] = movement.move_date.strftime('%d.%m.%Y')
+    worksheet[f'A4'] = 'Местоположение'
+    worksheet[f'B4'] = movement.location
+
+    table_header = ['Номер'] + list(display.values()) + ['Ответственный'] + ['Вернули']
+    for col_num, header_title in enumerate(table_header, 1):
+        col_letter = get_column_letter(col_num)
+        worksheet[f'{col_letter}6'] = header_title
+
+    for row_num, item in enumerate(items, start=7):
+        worksheet[f'A{row_num}'] = row_num - 6
+        for col_num, key in enumerate(display.keys(), start=2):
+            col_letter = get_column_letter(col_num)
+            worksheet[f'{col_letter}{row_num}'] = item['item'].get(key, '')
+
+        worksheet[f'{get_column_letter(len(display) + 2)}{row_num}'] = item['user']
+        worksheet[f'{get_column_letter(len(display) + 3)}{row_num}'] = 'Да' if item['is_returned'] else 'Нет'
+
+    excel_file = BytesIO()
+
+    # Save the workbook to the BytesIO object
+    workbook.save(excel_file)
+    excel_file.seek(0)
+
+    return excel_file
+
+
 def generate_qr(items):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)

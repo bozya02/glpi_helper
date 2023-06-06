@@ -82,9 +82,9 @@ def get_item(request: WSGIRequest | HttpRequest, itemtype, guid):
 def get_items_by_movement(request, movement):
     items = []
     for item_movement in ItemMovement.objects.filter(movement=movement):
-        item = (json.loads(get_item(request, item_movement.item.item_type, item_movement.item.guid).content)[
-            'result'])
+        item = (json.loads(get_item(request, item_movement.item.item_type, item_movement.item.guid).content)['result'])
         item['is_returned'] = item_movement.is_returned
+        item['item_movement_id'] = item_movement.id
         items.append(item)
     return JsonResponse({'result': items})
 
@@ -140,3 +140,5 @@ def create_movement(request):
     for item in items:
         db_item = Item.check_or_create_item(item['id'], item['item_type'])
         ItemMovement.objects.create(movement=movement, item=db_item)
+
+    return movement.id

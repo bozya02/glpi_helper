@@ -23,8 +23,26 @@ function selectAll(checkboxAll) {
     })
 }
 
-function submitForm(checkbox) {
+function submitCheckForm(checkbox) {
     const form = checkbox.closest('form');
+    const formData = new FormData(form);
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            // Обработка успешного ответа
+            console.log(data);
+        })
+        .catch(error => {
+            // Обработка ошибки
+            console.error(error);
+        });
+}
+
+function submitMovement(button) {
+    const form = button.closest('form');
     const formData = new FormData(form);
     fetch(form.action, {
         method: 'POST',

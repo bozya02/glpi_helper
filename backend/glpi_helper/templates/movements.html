@@ -1,28 +1,35 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block content %}
     <h1>Перемещения</h1>
-    <table>
-        <thead>
-        <tr>
-            <th>№</th>
-            <th>Дата</th>
-            <th>До даты</th>
-            <th>Сотрудник</th>
-            <th>Местоположение</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for movement in movements %}
-            <tr>
-                <td><a href="{% url 'movement' movement.id %}">{{ forloop.counter }}</a></td>
-                <td>{{ movement.date|date:"d.m.Y" }}</td>
-                <td>{{ movement.move_date|date:"d.m.Y" }}</td>
-                <td>{{ movement.username }}</td>
-                <td>{{ movement.location }}</td>
-            </tr>
-        {% endfor %}
+    <form method="GET" action="{% url 'movements' %}" class="d-flex align-items-center mb-3 gap-2">
+        {{ form.media }}
+        <div class="col-auto">
+            {{ form.date.label_tag }}
+        </div>
+        <div class="col-auto">
+            {{ form.date|add_class:'form-control' }}
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Применить</button>
+        </div>
+    </form>
 
-        </tbody>
-    </table>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for movement in movements %}
+            <div class="col">
+                <a href="{% url 'movement' movement.id %}" class="card-link" style="text-decoration: none;">
+                    <div class="card {% if movement|is_movement_returned %}bg-success text-white{% elif movement|is_movement_not_returned %}bg-danger text-white{% endif %}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ movement.username }}</h5>
+                            <p class="card-text mb-1">Дата: {{ movement.date|date:"d.m.Y" }}</p>
+                            <p class="card-text mb-1">До даты: {{ movement.move_date|date:"d.m.Y" }}</p>
+                            <p class="card-text mb-1">Местоположение: {{ movement.location }}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}

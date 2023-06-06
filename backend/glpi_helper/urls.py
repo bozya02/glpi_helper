@@ -14,5 +14,6 @@ urlpatterns = [
     path('update_selected_items/', views.update_selected_items, name='update_selected_items'),
     path('new_movement/', views.create_movement_view, name='new_movement'),
     path('movements/', views.movements_view, name='movements'),
-    path('movements/<int:movement_id>', views.movement_view, name='movement'),
+    path('movements/<int:movement_id>/', views.movement_view, name='movement'),
+    path('save_item_movement/<int:item_movement_id>/', views.save_item_movement, name='save_item_movement'),
 ]

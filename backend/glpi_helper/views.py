@@ -1,4 +1,5 @@
 # import Http Response from django
+import django.utils.timezone
 import json
 
 from django.core.handlers.wsgi import WSGIRequest
@@ -105,15 +106,29 @@ def search_table_view(request):
 
 
 def movements_view(request):
+    form = MovementsFilterForm(request.GET)
     movements = Movement.objects.all()
-    return render(request, 'movements.html', context={'movements': movements})
+
+    if form.is_valid():
+        date_filter = form.cleaned_data['date']
+        if date_filter:
+            movements = movements.filter(date__gte=date_filter)
+
+    context = {'movements': movements, 'form': form}
+    return render(request, 'movements.html', context)
 
 
 def movement_view(request, movement_id):
     movement = get_object_or_404(Movement, pk=movement_id)
     items = json.loads(api.views.get_items_by_movement(request, movement).content)['result']
 
-    print(items)
+    if request.method == 'POST':
+        excel_file = service.generate_movement_xlsx(movement, items)
+        response = HttpResponse(excel_file.read(),
+                                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="table.xlsx"'
+        return response
+
     return render(request, 'movement.html',
                   context={'movement': movement, 'items': items, 'display': service.get_table_display()})
 
@@ -121,10 +136,20 @@ def movement_view(request, movement_id):
 def create_movement_view(request):
     movement_form = MovementForm(request.POST)
     if movement_form.is_valid():
-        api.views.create_movement(request)
+        movement_id = api.views.create_movement(request)
         request.session['selected_items'] = []
 
-    return redirect('search_table')
+    return redirect(f'/movements' + f'/{movement_id}/' if movement_id else '')
+
+
+def save_item_movement(request, item_movement_id):
+    print(item_movement_id)
+    item_movement_db = ItemMovement.objects.get(pk=item_movement_id)
+    is_returned = bool(request.POST.get('is_returned'))
+    item_movement_db.is_returned = is_returned
+    item_movement_db.save()
+
+    return JsonResponse({'status': 'success'})
 
 
 def clear_table(request):
